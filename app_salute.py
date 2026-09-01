@@ -43,20 +43,35 @@ with t1:
     st.header("Profilo Personale e Dati Vitali")
     cursor.execute("SELECT * FROM anagrafica WHERE id = 1")
     p = cursor.fetchone()
+    
+    # Controllo di sicurezza: se il database è vuoto, usa testi vuoti
+    v_nome = p[1] if p and p[1] else ""
+    v_cognome = p[2] if p and p[2] else ""
+    v_dn = p[3] if p and p[3] else ""
+    v_gruppo = p[4] if p and p[4] else "Sconosciuto"
+    v_emergenza = p[5] if p and p[5] else ""
+    v_allergie = p[6] if p and p[6] else ""
+    
     with st.form("f_anag"):
         col1, col2 = st.columns(2)
-        nome = col1.text_input("Nome", value=p[1])
-        cognome = col1.text_input("Cognome", value=p[2])
-        dn = col1.text_input("Data di Nascita", value=p[3])
-        grp = col2.selectbox("Gruppo Sanguigno", ["Sconosciuto","A+","A-","B+","B-","AB+","AB-","0+","0-"], index=["Sconosciuto","A+","A-","B+","B-","AB+","AB-","0+","0-"].index(p[4]))
-        em = col2.text_area("Contatti Emergenza", value=p[6])
-        al = st.text_area("Allergie / Patologie Croniche", value=p[5])
+        nome = col1.text_input("Nome", value=v_nome)
+        cognome = col1.text_input("Cognome", value=v_cognome)
+        dn = col1.text_input("Data di Nascita", value=v_dn)
+        
+        # Gestione indice gruppo sanguigno
+        lista_gruppi = ["Sconosciuto","A+","A-","B+","B-","AB+","AB-","0+","0-"]
+        idx_gruppo = lista_gruppi.index(v_gruppo) if v_gruppo in lista_gruppi else 0
+        grp = col2.selectbox("Gruppo Sanguigno", lista_gruppi, index=idx_gruppo)
+        
+        em = col2.text_area("Contatti Emergenza", value=v_emergenza)
+        al = st.text_area("Allergie / Patologie Croniche", value=v_allergie)
+        
         if st.form_submit_button("💾 Salva Profilo"):
             cursor.execute("UPDATE anagrafica SET nome=?, cognome=?, data_nascita=?, gruppo_sanguigno=?, allergie=?, contatti_emergenza=? WHERE id=1", (nome, cognome, dn, grp, al, em))
             conn.commit()
             st.success("Profilo aggiornato!")
             st.rerun()
-
+            
 # --- TAB 2: STORICO VISITE ---
 with t2:
     st.header("🗂️ Archivio Storico Visite ed Esami Effettuati")
@@ -88,6 +103,7 @@ with t2:
             st.divider()
     else:
         st.info("Nessuna visita passata in archivio.")
+        
 # --- TAB 3: SCADENZIARIO VISITE FUTURE ---
 with t3:
     st.header("⏰ Scadenziario e Promemoria Prossime Visite")
